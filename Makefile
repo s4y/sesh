@@ -6,5 +6,5 @@ CXXFLAGS +=\
 
 CXXFLAGS += -g
 
-sesh: sesh.cpp
+sesh: sesh.cpp cli.cpp histrie.h stackstring.h
 	$(CXX) $(CXXFLAGS) -o $@ $<

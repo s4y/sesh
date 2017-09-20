@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-#include <readline/readline.h>
-#include <readline/history.h>
-
 #include <string>
 #include <vector>
+#include <iostream>
+
+#include "histrie.h"
+#include "cli.cpp"
 
 namespace state {
 	bool in_child = false;
@@ -89,23 +90,28 @@ int main() {
 
 	signal(SIGINT, handle_sigint);
 
+	cli cli;
+	cli.prompt = ": ";
+
 	std::string histfile = getenv("HOME");
 	histfile += "/.sesh_history";
-	read_history(histfile.c_str());
+	cli.read_history(histfile.c_str());
 
 	for (;;) {
-		const char *input;
+		std::string input;
 
 		if (sigsetjmp(sigint_buf, 1)) {
 			putchar('\n');
 			continue;
 		}
 
-		if (!(input = readline(": "))) break;
+		try {
+			input = cli.readline();
+		} catch (cli::EOFException) { break; }
 
-		if (*input != '\0') {
-			add_history(input);
-			int status = command(input).execute();
+		if (input[0] != '\0') {
+			cli.history.insert(input.c_str());
+			int status = command(input.c_str()).execute();
 			if (status != 0) {
 				printf("< %d\n", status);
 			}
@@ -113,5 +119,5 @@ int main() {
 	}
 
 	putchar('\n');
-	write_history(histfile.c_str());
+	// write_history(histfile.c_str());
 }
